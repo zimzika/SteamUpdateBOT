@@ -16,6 +16,14 @@ export async function CheckUpdateTimer(client: Client) {
       try {
         const appInfo = await steam.getPublicBranchUpdate(Number(gameID));
         if (appInfo.timeUpdated != data[gameID]?.timeUpdated) {
+          await db.push(`/${gameID}`, {
+            name: appInfo.appName,
+            appid: appInfo.appId,
+            buildid: appInfo.buildId,
+            timeUpdated: appInfo.timeUpdated,
+            dateUpdated: appInfo.dateUpdated,
+          });
+
           const guild = await client.guilds.fetch(process.env.DISCORD_GUILD).catch(console.error);
           if (!guild) return;
           const channel = await guild.channels.fetch(process.env.DISCORD_CHANNEL).catch(console.error);
