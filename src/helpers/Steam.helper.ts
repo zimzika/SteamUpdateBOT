@@ -34,12 +34,12 @@ export class SteamAppInfo {
         if (err) return reject(err);
 
         const app = apps[appId];
-        if (!app) return reject(new Error('App info não encontrado'));
+        if (!app) return reject(new Error(`App info não encontrado: ${appId}`));
 
         const appInfo = app.appinfo as AppInfoContentGame;
 
-        if (!appInfo.depots) return reject(new Error('Depots não encontrado'));
-        if (!appInfo.depots.branches) return reject(new Error('Branches não encontrado'));
+        if (!appInfo.depots) return reject(new Error(`Depots não encontrado: ${appId}`));
+        if (!appInfo.depots.branches) return reject(new Error(`Branches não encontrado: ${appId}`));
 
         resolve({
           appName: appInfo.common.name,

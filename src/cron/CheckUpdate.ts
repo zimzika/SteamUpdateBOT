@@ -3,8 +3,15 @@ import { SteamAppInfo } from "../helpers/Steam.helper";
 import { EmbedBuilder, type Client, type TextChannel } from "discord.js";
 
 export async function CheckUpdateTimer(client: Client) {
-  const steam = new SteamAppInfo();
   const db = DatabaseHelper.instance.db;
+
+  try {
+    await db.reload();
+  } catch (err) {
+    console.log("[ReloadDB-CRON] Cannot reload db: ", err);
+  }
+
+  const steam = new SteamAppInfo();
 
   await steam.connect();
 
@@ -13,8 +20,10 @@ export async function CheckUpdateTimer(client: Client) {
     const gamesID = Object.keys(data);
 
     for (const gameID of gamesID) {
+      const appInfo = await steam.getPublicBranchUpdate(Number(gameID)).catch(console.error);
+      if (!appInfo) continue;
+
       try {
-        const appInfo = await steam.getPublicBranchUpdate(Number(gameID));
         if (appInfo.timeUpdated != data[gameID]?.timeUpdated) {
           await db.push(`/${gameID}`, {
             name: appInfo.appName,
@@ -30,7 +39,7 @@ export async function CheckUpdateTimer(client: Client) {
           if (!channel) return;
 
           (channel as TextChannel).send({
-            content: "<@1106298160025964605> <@927732922163818527>",
+            content: "@everyone",
             embeds: [
               new EmbedBuilder()
                 .setColor("Random")
@@ -39,15 +48,16 @@ export async function CheckUpdateTimer(client: Client) {
                   text: "Developed by HuhRyan"
                 })
                 .setTitle(`New update for \`${appInfo.appName}\``)
-                .setImage(appInfo.appIcon)
             ]
-          });
+          }).catch(console.error);
         }
-      } catch (_) {
-        console.error("[CheckUpdate-CRON] Cannot get appInfo: ", gameID);
+      } catch (err) {
+        console.error("[CheckUpdate-CRON] Cannot get save DB: ", gameID, err);
       }
     }
-  } catch (_) { }
+  } catch (err) {
+    console.error(err);
+  }
   finally {
     steam.disconnect();
   }
